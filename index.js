@@ -1,16 +1,13 @@
-const express = require('express');
-const spreadsheet = require('./spreadsheet');
-const app = express();
-const HOSTNAME = '127.0.0.1';
-const PORT = process.env.PORT || 3000;
+let express = require('express')
+let spreadsheet = require('./spreadsheet')
+let app = express()
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', 'http://localhost:63342');
-    next();
-});
+
+app.get('/api', (req, res) => res.send('Hello World'))
 
 app.get('/api/credentials',
     (req, res) => spreadsheet.credentials()
@@ -46,4 +43,4 @@ app.post('/api/login', (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`Server running at http://${HOSTNAME}:${PORT}/`));
+app.listen(3000, () => console.log('Server running at Port 3000'))
