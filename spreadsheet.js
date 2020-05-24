@@ -71,8 +71,32 @@ async function verify(group) {
     const doc = await init();
     const totalGroups = await total(doc);
     const JSON = await accessCredentials();
-    let boolean = false;
-    return false;
+    let pass = false;
+
+    for (let i =0; i < JSON.length; i++) {
+        if (group.Name === JSON[i].Name && group.Password === JSON[i].Password) {
+	    pass = true;
+	}
+    }
+
+    return pass;
 }
 
-module.exports = {credentials: accessCredentials, leaderboard: accessLeaderboard, save: save, verify: verify};
+async function isRegistered(group) {
+    const doc = await init();
+    const totalGroups = await total(doc);
+    const JSON = await accessCredentials();
+    var registered = false;
+ 
+    for (let i = 0; i < JSON.length; i++) {
+        if (group.Name === JSON[i].Name) {
+	    registered = true;
+	} else {}
+    }
+
+    return registered;
+}
+    
+
+module.exports = {credentials: accessCredentials, leaderboard: accessLeaderboard, save: save, verify: verify,
+		  authenticate: isRegistered};
