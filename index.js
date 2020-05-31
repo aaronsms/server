@@ -14,6 +14,24 @@ app.get('/api/leaderboard',
     (req, res) => spreadsheet.leaderboard()
         .then(obj => res.send(JSON.stringify(obj))));
 
+// Process puzzle answer and update scores
+// TODO: update redirect links and error handling, include answer checking
+app.post('/api/solve', verifyGroup, 
+	 (req, res) => {
+             jwt.verify(req.token, 'secretkey', 
+		        (err, groupData) => {
+			    if (err) {
+				res.status(403).json({ msg: 'error' });
+			    } else {
+				spreadsheet.solved(req.puzzleName, groupData.group)
+					   .then(() => { res.send(groupData); });
+			    }
+			});
+		 
+});
+
+// Group registration
+// TODO: update redirect link
 app.post('/api/signup', (req, res) => {
     const newGroup = {
         Name: req.body.name,
@@ -37,6 +55,7 @@ app.post('/api/signup', (req, res) => {
     }
 });
 
+// Group login
 app.post('/api/login', (req, res) => {
     const group = {
         Name: req.body.name,
@@ -49,9 +68,9 @@ app.post('/api/login', (req, res) => {
         spreadsheet.verify(group)
 		   .then(x => {
 			     if (x) {
-			         jwt.sign({group: group}, 'secretkey', 
+			         jwt.sign({ group }, 'secretkey', 
 				          (err, token) => { 
-				              res.json({ token: token });
+				              res.json({ token });
 				          });
 			     } else {
 			         res.status(400).json({ msg: 'Invalid name/password. Please try again or register' });
@@ -59,5 +78,20 @@ app.post('/api/login', (req, res) => {
 	                 });
     }
 });
+
+// Verify group token 
+function verifyGroup(req, res, next) {
+    const header = req.headers['authorization'];
+    // If header is undefined send error, 
+    // else get token and call the next middleware
+    if (typeof header !== undefined) {
+	const bearer = header.split(' ');
+	const token = bearer[1];
+	req.token = token;
+	next();
+    } else {
+	res.status(403).json({ msg: 'Please login to submit your answer' });
+    }
+}
 
 app.listen(3000, () => console.log('Server running at Port 3000'))

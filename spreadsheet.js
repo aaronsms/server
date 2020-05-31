@@ -59,6 +59,7 @@ async function save(newGroup) {
     const newSheet = await doc.addSheet({
         title: `Group ${newGroup.ID}`, index: 2 + newGroup.ID });
     await newSheet.setHeaderRow(["Puzzles", "Solved", "Score"]);
+    GROUPS_ID[newGroup.ID - 1] = newSheet.sheetId;
 
     const sheet = await doc.sheetsById[LEADERBOARD_ID];
     await sheet.loadCells('C1:C30');
@@ -67,6 +68,7 @@ async function save(newGroup) {
     return newGroup;
 }
 
+// Checks the group login details
 async function verify(group) {
     const doc = await init();
     const totalGroups = await total(doc);
@@ -82,6 +84,7 @@ async function verify(group) {
     return pass;
 }
 
+// Checks if the group is already registered
 async function isRegistered(group) {
     const doc = await init();
     const totalGroups = await total(doc);
@@ -96,7 +99,38 @@ async function isRegistered(group) {
 
     return registered;
 }
-    
+
+// Checks the answer submitted by the group to the puzzle with name puzzleName and
+// updates the group sheet 
+async function solved(puzzleName, group) {
+    const doc = await init();
+    const totalGroups = await total(doc);
+    const JSON = await accessCredentials();
+
+    let i = 0;
+    let groupFound = false;
+    while (i < JSON.length && !groupFound) {
+	groupFound = JSON[i].Name === group.Name;
+	if (!groupFound) {
+            i++;
+	} else {}
+    }
+
+    console.log(groupFound);
+    if (groupFound) {
+	const groupSheet = await accessGroup(i + 1);
+	await groupSheet.addRow({ "Puzzles": puzzleName, "Solved": 'TRUE', "Score": 1 });
+    } else {}
+}
+
+// Gets the group sheet by id
+async function accessGroup(groupId) {
+    const doc = await init();
+    const totalGroups = await total(doc);
+    const sheet = await doc.sheetsById[GROUPS_ID[groupId - 1]];
+    return sheet;
+}
+
 
 module.exports = {credentials: accessCredentials, leaderboard: accessLeaderboard, save: save, verify: verify,
-		  authenticate: isRegistered};
+		  authenticate: isRegistered, solved: solved};
