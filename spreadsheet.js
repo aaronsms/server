@@ -78,30 +78,13 @@ async function save(newGroup) {
 // Checks the group login details
 async function verify(group) {
   const JSON = await accessCredentials();
-  let pass = false;
-
-  for (let i = 0; i < JSON.length; i++) {
-    if (group.Name === JSON[i].Name && group.Password === JSON[i].Password) {
-      pass = true;
-    }
-  }
-
-  return pass;
+  return JSON.some((value => group.Name === value.Name && group.Password === value.Password));
 }
 
 // Checks if the group is already registered
 async function isRegistered(group) {
   const JSON = await accessCredentials();
-  var registered = false;
-
-  for (let i = 0; i < JSON.length; i++) {
-    if (group.Name === JSON[i].Name) {
-      registered = true;
-    } else {
-    }
-  }
-
-  return registered;
+  return JSON.some((value) => group.Name === value.Name);
 }
 
 // Checks the answer submitted by the group to the puzzle with name puzzleName and
@@ -128,8 +111,7 @@ async function solved(puzzleName, group) {
 // Gets the group sheet by id
 async function accessGroup(groupId) {
   const doc = await init();
-  const sheet = await doc.sheetsById[GROUPS_ID[groupId - 1]];
-  return sheet;
+  return await doc.sheetsById[GROUPS_ID[groupId - 1]];
 }
 
 module.exports = {
