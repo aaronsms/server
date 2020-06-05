@@ -14,7 +14,8 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
-    "google-spreadsheet": "^3.0.11"
+    "google-spreadsheet": "^3.0.11",
+    "jsonwebtoken": "^8.5.1"
   },
   "devDependencies": {
     "prettier": "^2.0.5"
