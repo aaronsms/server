@@ -5,6 +5,61 @@ const CREDENTIALS_ID = 0;
 const LEADERBOARD_ID = 1618630879;
 const STATISTICS_ID = 1981752792;
 const GROUPS_ID = [];
+const puzzleNames = [
+  "are_you_satisfactory_enough",
+  "qet",
+  "cca",
+  "metapuzzle_10",
+  "utown",
+  "biz_fos",
+  "biz_soc",
+  "engin_yst",
+  "fass_engin",
+  "fass_soc",
+  "fos_yst",
+  "modreg",
+  "instagram",
+  "waiting_for_d2",
+  "the_committee",
+  "qet_marking",
+  "mala_stalls",
+  "music_box",
+  "things",
+  "dumb_ways_to_die",
+  "cat_emojis",
+  "solfa",
+  "classical_composers",
+  "pokemon_go",
+  "mrt_tracing",
+  "what_does_the_owl_say",
+  "polypotions",
+  "burkina_faso",
+  "football",
+  "world_politics",
+  "hieroglyphs",
+  "world_history",
+  "i_am_groot",
+  "central_library",
+  "multilingual_puns",
+  "leftover_dice",
+  "character_double",
+  "covid_19",
+  "the_heist",
+  "true_or_false",
+  "framing_differences",
+  "imdb",
+  "recipes",
+  "travelling",
+  "refresh",
+  "wifi_ssid",
+  "origami_startup",
+  "omr",
+  "periodic_table",
+  "12_pictures",
+  "protein_geeks",
+  "emission_spectra",
+  "anything",
+];
 
 async function init() {
   const doc = new GoogleSpreadsheet(
@@ -52,6 +107,7 @@ async function accessLeaderboard() {
   return accessSheet(sheet, totalGroups);
 }
 
+// Saves the newly registered group to the database and initialises a group sheet for the group
 async function save(newGroup) {
   const doc = await init();
   const totalGroups = await total(doc);
@@ -62,7 +118,11 @@ async function save(newGroup) {
     title: `Group ${newGroup.ID}`,
     index: 2 + newGroup.ID,
   });
-  await newSheet.setHeaderRow(["Puzzles", "Solved", "Score"]);
+  await newSheet.setHeaderRow(["Puzzle", "Solved"]);
+  for (let i = 0; i < puzzleNames.length; i++) {
+    await newSheet.addRow({ Puzzle: puzzleNames[i], Solved: 0 });
+  }
+
   GROUPS_ID[newGroup.ID - 1] = newSheet.sheetId;
 
   const sheet = await doc.sheetsById[LEADERBOARD_ID];
@@ -70,7 +130,7 @@ async function save(newGroup) {
   sheet.getCell(
     newGroup.ID,
     2
-  ).formula = `=IF(ISBLANK(A:A),"",0 + SUM(\'Group ${newGroup.ID}\'!C:C))`;
+  ).formula = `=IF(ISBLANK(A:A),"",0 + SUM(\'Group ${newGroup.ID}\'!B:B))`;
   await sheet.saveUpdatedCells();
   return newGroup;
 }
@@ -78,7 +138,9 @@ async function save(newGroup) {
 // Checks the group login details
 async function verify(group) {
   const JSON = await accessCredentials();
-  return JSON.some((value => group.Name === value.Name && group.Password === value.Password));
+  return JSON.some(
+    (value) => group.Name === value.Name && group.Password === value.Password
+  );
 }
 
 // Checks if the group is already registered
@@ -87,11 +149,11 @@ async function isRegistered(group) {
   return JSON.some((value) => group.Name === value.Name);
 }
 
-// Checks the answer submitted by the group to the puzzle with name puzzleName and
-// updates the group sheet
+// Updates the score of the group once the puzzle with id puzzleName is solved
 async function solved(puzzleName, group) {
   const JSON = await accessCredentials();
 
+  // Find group in the Groups sheet
   let i = 0;
   let groupFound = false;
   while (i < JSON.length && !groupFound) {
@@ -101,10 +163,24 @@ async function solved(puzzleName, group) {
     }
   }
 
-  console.log(groupFound);
+  // Find group sheet and find the correct entry to update
   if (groupFound) {
     const groupSheet = await accessGroup(i + 1);
-    await groupSheet.addRow({ Puzzles: puzzleName, Solved: "TRUE", Score: 1 });
+    const rows = await groupSheet.getRows();
+
+    let j = 0;
+    let puzzleFound = false;
+    while (j < puzzleNames.length && !puzzleFound) {
+      puzzleFound = rows[j].Puzzle === puzzleName;
+      if (!puzzleFound) {
+        j++;
+      }
+    }
+
+    if (puzzleFound) {
+      rows[j].Solved = 1;
+      await rows[j].save();
+    }
   }
 }
 

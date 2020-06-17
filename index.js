@@ -12,14 +12,13 @@ app.get("/api/leaderboard", (req, res) =>
   spreadsheet.leaderboard().then((obj) => res.send(JSON.stringify(obj)))
 );
 
-// Process puzzle answer and update scores
-// TODO: update redirect links and error handling, include answer checking
+// Update scores for correct puzzle solve
 app.post("/api/solve", verifyGroup, (req, res) => {
   jwt.verify(req.token, "secretkey", (err, groupData) => {
     if (err) {
       res.status(403).json({ msg: "error" });
     } else {
-      spreadsheet.solved(req.puzzleName, groupData.group).then(() => {
+      spreadsheet.solved(req.body.puzzleName, groupData.group).then(() => {
         res.send(groupData);
       });
     }
@@ -27,7 +26,6 @@ app.post("/api/solve", verifyGroup, (req, res) => {
 });
 
 // Group registration
-// TODO: update redirect link
 app.post("/api/signup", (req, res) => {
   const newGroup = {
     Name: req.body.name,
@@ -45,7 +43,6 @@ app.post("/api/signup", (req, res) => {
         });
       } else {
         spreadsheet.save(newGroup).then((x) => res.send(JSON.stringify(x)));
-        res.redirect("http://nusmsl.com/hunt/map.html");
       }
     });
   }
