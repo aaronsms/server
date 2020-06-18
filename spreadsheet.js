@@ -149,7 +149,8 @@ async function isRegistered(group) {
   return JSON.some((value) => group.Name === value.Name);
 }
 
-// Updates the score of the group once the puzzle with id puzzleName is solved
+// Updates the score of the group once the puzzle with id puzzleName is solved.
+// Returns true if the puzzle is already solved, false otherwise.
 async function solved(puzzleName, group) {
   const JSON = await accessCredentials();
 
@@ -178,8 +179,13 @@ async function solved(puzzleName, group) {
     }
 
     if (puzzleFound) {
-      rows[j].Solved = 1;
-      await rows[j].save();
+      if (rows[j].Solved === 1) {
+        return true;
+      } else {
+        rows[j].Solved = 1;
+        await rows[j].save();
+        return false;
+      }
     }
   }
 }

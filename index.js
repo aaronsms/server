@@ -18,8 +18,8 @@ app.post("/api/solve", verifyGroup, (req, res) => {
     if (err) {
       res.status(403).json({ msg: "error" });
     } else {
-      spreadsheet.solved(req.body.puzzleName, groupData.group).then(() => {
-        res.send(groupData);
+      spreadsheet.solved(req.body.puzzleName, groupData.group).then((bool) => {
+        res.send({ Name: groupData.group, Solved: bool });
       });
     }
   });
