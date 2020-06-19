@@ -4,62 +4,9 @@ const key = require("./server-key.json");
 const CREDENTIALS_ID = 0;
 const LEADERBOARD_ID = 1618630879;
 const STATISTICS_ID = 1981752792;
-const GROUPS_ID = [];
-const puzzleNames = [
-  "are_you_satisfactory_enough",
-  "qet",
-  "cca",
-  "metapuzzle_10",
-  "utown",
-  "biz_fos",
-  "biz_soc",
-  "engin_yst",
-  "fass_engin",
-  "fass_soc",
-  "fos_yst",
-  "modreg",
-  "instagram",
-  "waiting_for_d2",
-  "the_committee",
-  "qet_marking",
-  "mala_stalls",
-  "music_box",
-  "things",
-  "dumb_ways_to_die",
-  "cat_emojis",
-  "solfa",
-  "classical_composers",
-  "pokemon_go",
-  "mrt_tracing",
-  "what_does_the_owl_say",
-  "polypotions",
-  "burkina_faso",
-  "football",
-  "world_politics",
-  "hieroglyphs",
-  "world_history",
-  "i_am_groot",
-  "central_library",
-  "multilingual_puns",
-  "leftover_dice",
-  "character_double",
-  "covid_19",
-  "the_heist",
-  "true_or_false",
-  "framing_differences",
-  "imdb",
-  "recipes",
-  "travelling",
-  "refresh",
-  "wifi_ssid",
-  "origami_startup",
-  "omr",
-  "periodic_table",
-  "12_pictures",
-  "protein_geeks",
-  "emission_spectra",
-  "anything",
-];
+const GROUPS_ID = {};
+
+const puzzleNames = new Map (Object.entries({are_you_satisfactory_enough: 1, qet: 2, cca: 3, metapuzzle_10: 4, utown: 5, biz_fos: 6, biz_soc: 7, engin_yst: 8, fass_engin: 9, fass_soc: 10, fos_yst: 11, modreg: 12, instagram: 13, waiting_for_d2: 14, the_committee: 15, qet_marking: 16, mala_stalls: 17, music_box: 18, things: 19, dumb_ways_to_die: 20, cat_emojis: 21, solfa: 22, classical_composers: 23, pokemon_go: 24, mrt_tracing: 25, what_does_the_owl_say: 26, polypotions: 27, burkina_faso: 28, football: 29, world_politics: 30, hieroglyphs: 31, world_history: 32, i_am_groot: 33, central_library: 34, multilingual_puns: 35, leftover_dice: 36, character_double: 37, covid_19: 38, the_heist: 39, true_or_false: 40, framing_differences: 41, imdb: 42, recipes: 43, travelling: 44, refresh: 45, wifi_ssid: 46, origami_startup: 47, omr: 48, periodic_table: 49, "12_pictures": 50, protein_geeks: 51, emission_spectra: 52, anything: 53}));
 
 async function init() {
   const doc = new GoogleSpreadsheet(
@@ -115,15 +62,23 @@ async function save(newGroup) {
   await doc.sheetsById[CREDENTIALS_ID].addRow(newGroup);
 
   const newSheet = await doc.addSheet({
-    title: `Group ${newGroup.ID}`,
+    title: `Group ${newGroup.Name}`,
     index: 2 + newGroup.ID,
   });
   await newSheet.setHeaderRow(["Puzzle", "Solved"]);
-  for (let i = 0; i < puzzleNames.length; i++) {
-    await newSheet.addRow({ Puzzle: puzzleNames[i], Solved: 0 });
-  }
 
-  GROUPS_ID[newGroup.ID - 1] = newSheet.sheetId;
+  let template = [];
+  console.log(puzzleNames)
+  for (let k of puzzleNames.keys()) {
+    console.log(k);
+    let obj = { Puzzle: k, Solved: 0 };
+    console.log(obj);
+    template.push(obj);
+  }
+  console.log(template);
+  await newSheet.addRows(template);
+
+  GROUPS_ID[newGroup.Name] = newSheet.sheetId;
 
   const sheet = await doc.sheetsById[LEADERBOARD_ID];
   await sheet.loadCells("C1:C30");
@@ -152,48 +107,33 @@ async function isRegistered(group) {
 // Updates the score of the group once the puzzle with id puzzleName is solved.
 // Returns true if the puzzle is already solved, false otherwise.
 async function solved(puzzleName, group) {
-  const JSON = await accessCredentials();
-
   // Find group in the Groups sheet
-  let i = 0;
-  let groupFound = false;
-  while (i < JSON.length && !groupFound) {
-    groupFound = JSON[i].Name === group.Name;
-    if (!groupFound) {
-      i++;
-    }
-  }
-
+  console.log(puzzleName);
+  console.log(puzzleNames);
+  let groupId = GROUPS_ID[group.Name];
+  let puzzleRow = puzzleNames.get(puzzleName) - 1;
+  console.log(groupId);
+  console.log(puzzleRow);
   // Find group sheet and find the correct entry to update
-  if (groupFound) {
-    const groupSheet = await accessGroup(i + 1);
+  if (groupId && puzzleRow) {
+    const groupSheet = await accessGroup(groupId);
     const rows = await groupSheet.getRows();
 
-    let j = 0;
-    let puzzleFound = false;
-    while (j < puzzleNames.length && !puzzleFound) {
-      puzzleFound = rows[j].Puzzle === puzzleName;
-      if (!puzzleFound) {
-        j++;
-      }
-    }
-
-    if (puzzleFound) {
-      if (rows[j].Solved === 1) {
+      if (rows[puzzleRow].Solved === 1) {
         return true;
       } else {
-        rows[j].Solved = 1;
-        await rows[j].save();
+        console.log(puzzleRow);
+        rows[puzzleRow].Solved = 1;
+        await rows[puzzleRow].save();
         return false;
       }
     }
-  }
 }
 
 // Gets the group sheet by id
 async function accessGroup(groupId) {
   const doc = await init();
-  return await doc.sheetsById[GROUPS_ID[groupId - 1]];
+  return await doc.sheetsById[groupId];
 }
 
 module.exports = {

@@ -19,7 +19,8 @@ app.post("/api/solve", verifyGroup, (req, res) => {
       res.status(403).json({ msg: "error" });
     } else {
       spreadsheet.solved(req.body.puzzleName, groupData.group).then((bool) => {
-        res.send({ Name: groupData.group, Solved: bool });
+        let isSolved = bool ? 'true' : 'false';
+        res.send({ Group: groupData.group, Solved: isSolved });
       });
     }
   });
@@ -88,3 +89,5 @@ function verifyGroup(req, res, next) {
 }
 
 app.listen(3000, () => console.log("Server running at Port 3000"));
+// let group = {name: 'asdf', password: 'asdfasdf'};
+// spreadsheet.save(group);
