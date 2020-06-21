@@ -6,8 +6,6 @@ let app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.get("/api", (req, res) => res.send("Hello World"));
-
 app.get("/api/leaderboard", (req, res) =>
   spreadsheet.leaderboard().then((obj) => res.send(JSON.stringify(obj)))
 );
@@ -16,12 +14,14 @@ app.get("/api/leaderboard", (req, res) =>
 app.post("/api/solve", verifyGroup, (req, res) => {
   jwt.verify(req.token, "secretkey", (err, groupData) => {
     if (err) {
-      res.status(403).json({ msg: "error" });
+      res.status(403).json({ msg: "Server error" });
     } else {
       spreadsheet.solved(req.body.puzzleName, groupData.group).then((bool) => {
         let isSolved = bool ? 'true' : 'false';
-        res.send({ Group: groupData.group, Solved: isSolved });
-      });
+        res.send({ group: groupData.group, solved: isSolved });
+      }).catch(
+        () => res.send({ msg: "Server error"})
+      );
     }
   });
 });
@@ -29,11 +29,11 @@ app.post("/api/solve", verifyGroup, (req, res) => {
 // Group registration
 app.post("/api/signup", (req, res) => {
   const newGroup = {
-    Name: req.body.name,
-    Password: req.body.password,
+    name: req.body.name,
+    password: req.body.password,
   };
 
-  if (!newGroup.Name || !newGroup.Password) {
+  if (!newGroup.name || !newGroup.password) {
     res.status(400).json({ msg: "Please include a name or a password" });
   } else {
     spreadsheet.authenticate(newGroup).then((x) => {
@@ -52,11 +52,11 @@ app.post("/api/signup", (req, res) => {
 // Group login
 app.post("/api/login", (req, res) => {
   const group = {
-    Name: req.body.name,
-    Password: req.body.password,
+    name: req.body.name,
+    password: req.body.password,
   };
 
-  if (!group.Name || !group.Password) {
+  if (!group.name || !group.password) {
     res.status(400).json({ msg: "Please enter your name and password" });
   } else {
     spreadsheet.verify(group).then((x) => {
@@ -89,5 +89,3 @@ function verifyGroup(req, res, next) {
 }
 
 app.listen(3000, () => console.log("Server running at Port 3000"));
-// let group = {name: 'asdf', password: 'asdfasdf'};
-// spreadsheet.save(group);
